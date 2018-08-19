@@ -87,7 +87,12 @@ class BalloonDataset(utils.Dataset):
         subset: Subset to load: train or val
         """
         # Add classes. We have only one class to add.
-        self.add_class("balloon", 1, "balloon")
+        self.add_class("balloon", 1, "Left Hand")
+	self.add_class("balloon", 2, "Right Hand")
+	self.add_class("balloon", 3, "Left Hand 2")
+	self.add_class("balloon", 4, "Right Hand 2")
+	
+	class_id_temp = ["BG","Left Hand","Right Hand", "Left Hand 2", "Right Hand 2"]
 
         # Train or validation dataset?
         assert subset in ["train", "val"]
@@ -122,7 +127,12 @@ class BalloonDataset(utils.Dataset):
             # the outline of each object instance. There are stores in the
             # shape_attributes (see json format above)
             polygons = [r['shape_attributes'] for r in a['regions']]
+		
+            class_ids = []
 
+            for i in polygons:
+		
+            	class_ids.append(class_id_temp.index(i["name"]))
             # load_mask() needs the image size to convert polygons to masks.
             # Unfortunately, VIA doesn't include it in JSON, so we must read
             # the image. This is only managable since the dataset is tiny.
@@ -135,7 +145,7 @@ class BalloonDataset(utils.Dataset):
                 image_id=a['filename'],  # use file name as a unique image id
                 path=image_path,
                 width=width, height=height,
-                polygons=polygons)
+                polygons=polygons, class_ids=class_ids)
 
     def load_mask(self, image_id):
         """Generate instance masks for an image.
@@ -161,7 +171,7 @@ class BalloonDataset(utils.Dataset):
 
         # Return mask, and array of class IDs of each instance. Since we have
         # one class ID only, we return an array of 1s
-        return mask.astype(np.bool), np.ones([mask.shape[-1]], dtype=np.int32)
+        return mask.astype(np.bool), info['class_ids']
 
     def image_reference(self, image_id):
         """Return the path of the image."""
